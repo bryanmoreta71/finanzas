@@ -34,7 +34,10 @@ En la app, botón **Widget** arriba a la derecha. Con vista previa en vivo:
 - Diseño **Terminal (CMD)**: el widget se ve como una ventana de consola, con barra de título,
   prompt `C:\finanzas>`, comandos, tabla con guiones y vistos `[ ]`. Presets **CMD** (paleta
   clásica de Windows) y **Hacker** (verde fosforescente con cian y magenta).
-- Estilos rápidos: Clásico, CMD, Hacker, Noche, Transparente, Vidrio, Neón, Pastel, Papel, Océano y Rosa.
+- Diseños **Android Studio** y **VS Code** como en una Mac: ventana con el semáforo rojo/amarillo/verde,
+  pestaña del archivo, números de línea, los egresos escritos como código (Kotlin o TypeScript) con
+  los colores de cada editor, el cursor en la última línea y los totales en la barra de estado.
+- Estilos rápidos: Clásico, CMD, Hacker, Android Studio, VS Code, Noche, Transparente, Vidrio, Neón, Pastel, Papel, Océano y Rosa.
 - Título propio, 11 tipos de letra, tamaño de letra, montos en negrita.
 - Colores de fondo, letras, ingresos, egresos y filas (paleta o cualquier color), con transparencia
   del fondo y de las filas.

@@ -132,9 +132,10 @@ internal class Look(val style: WidgetStyle) {
 @Composable
 fun WidgetContent(ledger: Ledger, today: LocalDate, style: WidgetStyle, preview: Boolean = false) {
     val look = Look(style)
-    if (style.layout == WidgetLayout.TERMINAL) {
-        TerminalContent(ledger, today, look, preview)
-        return
+    when (style.layout) {
+        WidgetLayout.TERMINAL -> return TerminalContent(ledger, today, look, preview)
+        WidgetLayout.ANDROID_STUDIO, WidgetLayout.VSCODE -> return IdeContent(ledger, today, look, preview)
+        WidgetLayout.NORMAL -> Unit
     }
     Column(
         modifier = GlanceModifier

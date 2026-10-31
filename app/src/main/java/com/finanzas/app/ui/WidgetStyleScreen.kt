@@ -170,8 +170,11 @@ fun WidgetStyleScreen(
                         onValueChange = { onChange(style.copy(title = it)) },
                         placeholder = {
                             Text(
-                                if (style.layout == WidgetLayout.TERMINAL) "Título de la ventana (vacío = cmd.exe)"
-                                else "Ej. Mis pagos 💸 (vacío = solo la fecha)",
+                                when {
+                                    style.layout == WidgetLayout.TERMINAL -> "Título de la ventana (vacío = cmd.exe)"
+                                    style.layout.isIde -> "Nombre del proyecto (vacío = finanzas)"
+                                    else -> "Ej. Mis pagos 💸 (vacío = solo la fecha)"
+                                }
                             )
                         },
                         singleLine = true,
@@ -213,7 +216,7 @@ fun WidgetStyleScreen(
                 item { ColorRow("Letras", style.text) { onChange(style.copy(text = it)) } }
                 item { ColorRow("Ingresos y tachado", style.accent) { onChange(style.copy(accent = it)) } }
                 item { ColorRow("Egresos y faltantes", style.expense) { onChange(style.copy(expense = it)) } }
-                item { ColorRow(if (style.layout == WidgetLayout.TERMINAL) "Barra de título" else "Filas", style.row) { onChange(style.copy(row = it)) } }
+                item { ColorRow(if (style.layout == WidgetLayout.NORMAL) "Filas" else "Barra de título", style.row) { onChange(style.copy(row = it)) } }
                 item {
                     LabeledSlider("Transparencia de las filas", "${((1 - style.rowAlpha) * 100).toInt()}%", 1 - style.rowAlpha, 0f..1f) {
                         onChange(style.copy(rowAlpha = 1 - it))
@@ -343,6 +346,14 @@ private fun PresetCard(name: String, style: WidgetStyle, onClick: () -> Unit) {
             Column {
                 if (style.layout == WidgetLayout.TERMINAL) {
                     Text("C:\\>_", color = Color(style.text), fontFamily = family, fontSize = 13.sp)
+                } else if (style.layout.isIde) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        listOf(0xFFFF5F57, 0xFFFEBC2E, 0xFF28C840).forEach {
+                            Box(Modifier.size(7.dp).clip(CircleShape).background(Color(it)))
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text("</>", color = Color(style.text), fontFamily = family, fontSize = 13.sp)
                 } else {
                     Text("$50", color = Color(style.text), fontFamily = family, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }

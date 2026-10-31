@@ -22,6 +22,12 @@ enum class WidgetFont(val family: String, val label: String) {
 enum class WidgetLayout(val label: String) {
     NORMAL("Normal"),
     TERMINAL("Terminal (CMD)"),
+    ANDROID_STUDIO("Android Studio"),
+    VSCODE("VS Code"),
+    ;
+
+    /** Diseños que dibujan una ventana de editor de código de Mac. */
+    val isIde: Boolean get() = this == ANDROID_STUDIO || this == VSCODE
 }
 
 enum class RowStyle(val label: String) {
@@ -126,6 +132,24 @@ val WidgetPresets = listOf(
             layout = WidgetLayout.TERMINAL, background = c(0xFF000000), text = c(0xFF00FF41),
             accent = c(0xFF00E5FF), expense = c(0xFFFF0055), row = c(0xFF0A1F0F), font = WidgetFont.MONO,
             cornerRadius = 6, boldAmounts = true,
+        ),
+    ),
+    // Android Studio en Mac con el tema oscuro de la interfaz nueva.
+    WidgetPreset(
+        "Android Studio",
+        WidgetStyle(
+            layout = WidgetLayout.ANDROID_STUDIO, background = c(0xFF1E1F22), text = c(0xFFBCBEC4),
+            accent = c(0xFF5FB865), expense = c(0xFFF75464), row = c(0xFF2B2D30), font = WidgetFont.MONO,
+            cornerRadius = 12, boldAmounts = false,
+        ),
+    ),
+    // VS Code en Mac con el tema "Dark Modern".
+    WidgetPreset(
+        "VS Code",
+        WidgetStyle(
+            layout = WidgetLayout.VSCODE, background = c(0xFF1F1F1F), text = c(0xFFCCCCCC),
+            accent = c(0xFF89D185), expense = c(0xFFF14C4C), row = c(0xFF181818), font = WidgetFont.MONO,
+            cornerRadius = 12, boldAmounts = false,
         ),
     ),
     WidgetPreset(
