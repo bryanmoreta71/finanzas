@@ -42,7 +42,7 @@ class WidgetRenderTest {
 
         WidgetPresets.forEach { preset ->
             val views = GlanceRemoteViews().compose(context, DpSize(wDp.dp, hDp.dp)) {
-                WidgetContent(SampleLedger, "Viernes 31 de octubre", preset.style, preview = true)
+                WidgetContent(SampleLedger, java.time.LocalDate.of(2026, 10, 31), preset.style, preview = true)
             }.remoteViews
             val frame = FrameLayout(context)
             val view = views.apply(context, frame)

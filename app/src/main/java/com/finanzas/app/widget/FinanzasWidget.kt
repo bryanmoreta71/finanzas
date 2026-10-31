@@ -55,17 +55,17 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val IdKey = ActionParameters.Key<Long>("movement_id")
+internal val IdKey = ActionParameters.Key<Long>("movement_id")
 
 private val dateFormat = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale.forLanguageTag("es"))
 
-fun todayLabel(): String = LocalDate.now().format(dateFormat).replaceFirstChar { it.uppercase() }
+private fun dayLabel(day: LocalDate): String = day.format(dateFormat).replaceFirstChar { it.uppercase() }
 
 class FinanzasWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val ledger = FinanzasRepository.get(context).currentLedger()
         val style = WidgetStyleStore.load(context)
-        val today = todayLabel()
+        val today = LocalDate.now()
         provideContent {
             WidgetContent(ledger, today, style)
         }
@@ -93,7 +93,7 @@ class ReceiveIncomeAction : ActionCallback {
 }
 
 /** Colores y tipografía del widget ya resueltos a partir de un [WidgetStyle]. */
-private class Look(val style: WidgetStyle) {
+internal class Look(val style: WidgetStyle) {
     val text = Color(style.text)
     val secondary = text.copy(alpha = 0.65f)
     val accent = Color(style.accent)
@@ -101,6 +101,9 @@ private class Look(val style: WidgetStyle) {
     val expense = Color(style.expense)
     val row = Color(style.row).copy(alpha = style.rowAlpha)
     val divider = text.copy(alpha = 0.15f)
+
+    /** Barra de título en el diseño de terminal; usa el color de las filas. */
+    val titleBar = row
     val background = Color(style.background).copy(alpha = style.backgroundAlpha)
     private val family = FontFamily(style.font.family)
 
@@ -127,8 +130,12 @@ private class Look(val style: WidgetStyle) {
  * para mostrarlo dentro de la app mientras se personaliza.
  */
 @Composable
-fun WidgetContent(ledger: Ledger, today: String, style: WidgetStyle, preview: Boolean = false) {
+fun WidgetContent(ledger: Ledger, today: LocalDate, style: WidgetStyle, preview: Boolean = false) {
     val look = Look(style)
+    if (style.layout == WidgetLayout.TERMINAL) {
+        TerminalContent(ledger, today, look, preview)
+        return
+    }
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -136,7 +143,7 @@ fun WidgetContent(ledger: Ledger, today: String, style: WidgetStyle, preview: Bo
             .cornerRadius(style.cornerRadius.dp)
             .padding(horizontal = 10.dp, vertical = 8.dp),
     ) {
-        Header(look, today, preview)
+        Header(look, dayLabel(today), preview)
 
         if (style.showHeaders) {
             Row(
@@ -357,5 +364,5 @@ private fun ToReceiveLine(look: Look, income: Movement, index: Int, interactive:
     }
 }
 
-private inline fun <reified T : ActionCallback> action(id: Long) =
+internal inline fun <reified T : ActionCallback> action(id: Long) =
     actionRunCallback<T>(actionParametersOf(IdKey to id))

@@ -18,6 +18,12 @@ enum class WidgetFont(val family: String, val label: String) {
     SMALLCAPS("sans-serif-smallcaps", "Versalitas"),
 }
 
+/** Cómo se arma el widget: lista normal o consola tipo CMD. */
+enum class WidgetLayout(val label: String) {
+    NORMAL("Normal"),
+    TERMINAL("Terminal (CMD)"),
+}
+
 enum class RowStyle(val label: String) {
     PLAIN("Simple"),
     DIVIDERS("Con líneas"),
@@ -46,6 +52,7 @@ data class WidgetStyle(
     val showHeaders: Boolean = true,
     val showTotals: Boolean = true,
     val showToReceive: Boolean = true,
+    val layout: WidgetLayout = WidgetLayout.NORMAL,
 ) {
     fun toJson(): String = JSONObject()
         .put("background", background)
@@ -64,6 +71,7 @@ data class WidgetStyle(
         .put("showHeaders", showHeaders)
         .put("showTotals", showTotals)
         .put("showToReceive", showToReceive)
+        .put("layout", layout.name)
         .toString()
 
     companion object {
@@ -87,6 +95,7 @@ data class WidgetStyle(
                 showHeaders = o.optBoolean("showHeaders", d.showHeaders),
                 showTotals = o.optBoolean("showTotals", d.showTotals),
                 showToReceive = o.optBoolean("showToReceive", d.showToReceive),
+                layout = enumOr(o.optString("layout"), d.layout),
             )
         }
 
@@ -101,6 +110,24 @@ private fun c(hex: Long) = hex.toInt()
 
 val WidgetPresets = listOf(
     WidgetPreset("Clásico", WidgetStyle()),
+    // Consola de Windows con la paleta "Campbell": fondo casi negro, texto gris claro.
+    WidgetPreset(
+        "CMD",
+        WidgetStyle(
+            layout = WidgetLayout.TERMINAL, background = c(0xFF0C0C0C), text = c(0xFFCCCCCC),
+            accent = c(0xFF16C60C), expense = c(0xFFE74856), row = c(0xFF1F1F1F), font = WidgetFont.MONO,
+            cornerRadius = 6, boldAmounts = false,
+        ),
+    ),
+    // Terminal "hacker" verde fosforescente con detalles cian y magenta.
+    WidgetPreset(
+        "Hacker",
+        WidgetStyle(
+            layout = WidgetLayout.TERMINAL, background = c(0xFF000000), text = c(0xFF00FF41),
+            accent = c(0xFF00E5FF), expense = c(0xFFFF0055), row = c(0xFF0A1F0F), font = WidgetFont.MONO,
+            cornerRadius = 6, boldAmounts = true,
+        ),
+    ),
     WidgetPreset(
         "Noche",
         WidgetStyle(

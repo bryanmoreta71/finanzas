@@ -73,7 +73,7 @@ import com.finanzas.app.widget.WidgetContent
 import com.finanzas.app.widget.WidgetFont
 import com.finanzas.app.widget.WidgetPresets
 import com.finanzas.app.widget.WidgetStyle
-import com.finanzas.app.widget.todayLabel
+import com.finanzas.app.widget.WidgetLayout
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -168,7 +168,12 @@ fun WidgetStyleScreen(
                     OutlinedTextField(
                         value = style.title,
                         onValueChange = { onChange(style.copy(title = it)) },
-                        placeholder = { Text("Ej. Mis pagos 💸 (vacío = solo la fecha)") },
+                        placeholder = {
+                            Text(
+                                if (style.layout == WidgetLayout.TERMINAL) "Título de la ventana (vacío = cmd.exe)"
+                                else "Ej. Mis pagos 💸 (vacío = solo la fecha)",
+                            )
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     )
@@ -208,7 +213,7 @@ fun WidgetStyleScreen(
                 item { ColorRow("Letras", style.text) { onChange(style.copy(text = it)) } }
                 item { ColorRow("Ingresos y tachado", style.accent) { onChange(style.copy(accent = it)) } }
                 item { ColorRow("Egresos y faltantes", style.expense) { onChange(style.copy(expense = it)) } }
-                item { ColorRow("Filas", style.row) { onChange(style.copy(row = it)) } }
+                item { ColorRow(if (style.layout == WidgetLayout.TERMINAL) "Barra de título" else "Filas", style.row) { onChange(style.copy(row = it)) } }
                 item {
                     LabeledSlider("Transparencia de las filas", "${((1 - style.rowAlpha) * 100).toInt()}%", 1 - style.rowAlpha, 0f..1f) {
                         onChange(style.copy(rowAlpha = 1 - it))
@@ -216,6 +221,17 @@ fun WidgetStyleScreen(
                 }
 
                 item { Section("Forma") }
+                item {
+                    FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        WidgetLayout.entries.forEach { layout ->
+                            FilterChip(
+                                selected = style.layout == layout,
+                                onClick = { onChange(style.copy(layout = layout)) },
+                                label = { Text(layout.label) },
+                            )
+                        }
+                    }
+                }
                 item {
                     FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         RowStyle.entries.forEach { rowStyle ->
@@ -268,7 +284,7 @@ fun WidgetPreview(ledger: Ledger, style: WidgetStyle, modifier: Modifier = Modif
         var remoteViews by remember { mutableStateOf<RemoteViews?>(null) }
         LaunchedEffect(ledger, style, size) {
             remoteViews = GlanceRemoteViews()
-                .compose(context, size) { WidgetContent(ledger, todayLabel(), style, preview = true) }
+                .compose(context, size) { WidgetContent(ledger, LocalDate.now(), style, preview = true) }
                 .remoteViews
         }
         AndroidView(
@@ -325,7 +341,11 @@ private fun PresetCard(name: String, style: WidgetStyle, onClick: () -> Unit) {
                 .padding(8.dp),
         ) {
             Column {
-                Text("$50", color = Color(style.text), fontFamily = family, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                if (style.layout == WidgetLayout.TERMINAL) {
+                    Text("C:\\>_", color = Color(style.text), fontFamily = family, fontSize = 13.sp)
+                } else {
+                    Text("$50", color = Color(style.text), fontFamily = family, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
                 Text(
                     "$20",
                     color = Color(style.accent),
