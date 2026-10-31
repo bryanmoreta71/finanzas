@@ -6,29 +6,45 @@ App Android (Kotlin) para llevar egresos e ingresos, pensada para usarse desde u
 
 ```
  Viernes 31 de octubre                      ⚙
- Otra  Monto  Motivo          Ingresos   Pagar
- [ ]   $50    Juan            ~~$50~~     [ ]
- [ ]   $120   Luz             ~~$120~~    [ ]
- [ ]   $300   Renta           Faltan $270
- Egresos: $470                  Ingresos: $200
+ Monto  Motivo          Ingresos   Pagar
+ $20    Netflix         ~~$20~~     [ ]
+ $60    Agua            ~~$60~~     [ ]
+ $200   Renta           Alcanza     [ ]
+ $300   Tarjeta         Faltan $50
+ Por cobrar
+ $400   Uber            lun 2 nov  [Llegó]
+ Egresos: $580                  Ingresos: $250
 ```
 
-- Arriba: la fecha de hoy y la tuerquita ⚙, que abre la app.
-- La lista de egresos pendientes va del monto **más pequeño al más alto**.
-- Cada fila: monto, motivo o persona y la celda de **Ingresos**. Con tus ingresos disponibles se van
-  tachando en verde, empezando por los más pequeños, los egresos que alcanzas a pagar. Si no alcanza,
-  la celda dice cuánto falta.
-- **Visto izquierdo**: el egreso se pagó con otra fuente. Sale de la lista y los ingresos no cambian.
-- **Visto derecho** (solo en los tachados en verde): el egreso se paga con los ingresos. Sale de la lista
-  y su monto se resta de los ingresos.
-- Abajo: total de egresos pendientes y total de ingresos disponibles.
+- Arriba: la fecha de hoy (y un título opcional) y la tuerquita ⚙, que abre la app.
+- Los egresos pendientes van del monto **más pequeño al más alto**.
+- **Tachado en verde = sugerencia**: con tus ingresos disponibles, la app tacha los egresos que
+  alcanzas a pagar empezando por los más pequeños.
+- **Visto de "Pagar"**: paga el egreso con tus ingresos y se resta de ellos. Puedes marcar cualquier
+  egreso que te alcance, aunque no esté sugerido ("Alcanza"). Solo si el egreso es mayor que tus
+  ingresos no se puede marcar, y dice cuánto falta.
+- **Por cobrar**: ingresos que todavía no llegan (ej. Uber, que paga los lunes) con la fecha en que
+  llegan. No cuentan en los ingresos hasta que tocas **Llegó**.
+- Abajo: total de egresos pendientes y de ingresos disponibles.
+
+## Personalizar el widget
+
+En la app, botón **Widget** arriba a la derecha. Con vista previa en vivo:
+
+- Estilos rápidos: Clásico, Noche, Transparente, Vidrio, Neón, Pastel, Papel, Océano y Rosa.
+- Título propio, 11 tipos de letra, tamaño de letra, montos en negrita.
+- Colores de fondo, letras, ingresos, egresos y filas (paleta o cualquier color), con transparencia
+  del fondo y de las filas.
+- Forma de las filas (simple, con líneas, rayas o tarjetas) y esquinas redondeadas.
+- Mostrar u ocultar títulos de columnas, totales e ingresos por cobrar.
 
 ## App
 
 - **Egresos**: la misma lista que el widget. Toca un egreso para editarlo o eliminarlo.
-- **Ingresos**: total, lo usado para pagar egresos y lo disponible. Toca uno para editarlo o eliminarlo.
-- **Pagados**: historial de lo que marcaste con un visto, con botón **Deshacer** por si tocaste uno sin querer.
-- Botón **Añadir egreso / Añadir ingreso**.
+- **Ingresos**: por cobrar (con botón **Llegó**) y recibidos; total, lo usado y lo disponible.
+- **Pagados**: historial de lo pagado, con **Deshacer** por si marcaste uno sin querer.
+- Botón **Añadir egreso / Añadir ingreso**. Al añadir un ingreso puedes marcarlo como
+  *por cobrar* y elegir el día ("El lunes", "Mañana" u otra fecha).
 
 ## Compilar
 
@@ -40,5 +56,11 @@ Abre el proyecto en Android Studio, o desde la terminal (con el SDK de Android c
 
 El APK queda en `app/build/outputs/apk/debug/app-debug.apk`. Después de instalarlo, mantén presionada la
 pantalla de inicio → Widgets → **Finanzas / Egresos**.
+
+Para ver los estilos del widget como imágenes PNG sin teléfono:
+
+```
+./gradlew testDebugUnitTest -Pwidget.render.dir=/ruta/de/salida
+```
 
 Hecho con Jetpack Compose (app), Jetpack Glance (widget) y Room (base de datos local). Android 8.0+.

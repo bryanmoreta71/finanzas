@@ -41,3 +41,25 @@ fun parseMoney(input: String): Long? {
 
 fun centsToInput(cents: Long): String =
     BigDecimal.valueOf(cents, 2).stripTrailingZeros().toPlainString()
+
+private val spanish = Locale.forLanguageTag("es")
+private val shortDay = java.time.format.DateTimeFormatter.ofPattern("EEE d MMM", spanish)
+private val longDay = java.time.format.DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", spanish)
+
+/** 20395 -> "lun 3 nov". */
+fun formatShortDay(epochDay: Long): String =
+    java.time.LocalDate.ofEpochDay(epochDay).format(shortDay).replace(".", "")
+
+/** 20395 -> "Lunes 3 de noviembre". */
+fun formatLongDay(epochDay: Long): String =
+    java.time.LocalDate.ofEpochDay(epochDay).format(longDay).replaceFirstChar { it.uppercase() }
+
+/** "hoy", "mañana", "en 3 días", "hace 2 días". */
+fun relativeDay(epochDay: Long, today: Long = java.time.LocalDate.now().toEpochDay()): String =
+    when (val diff = epochDay - today) {
+        0L -> "hoy"
+        1L -> "mañana"
+        -1L -> "ayer"
+        in 2L..Long.MAX_VALUE -> "en $diff días"
+        else -> "hace ${-diff} días"
+    }

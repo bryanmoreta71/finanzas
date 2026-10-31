@@ -33,6 +33,15 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all { test ->
+            test.systemProperty("widget.render.dir", project.findProperty("widget.render.dir") ?: "")
+            project.findProperty("robolectric.dependency.repo.url")?.let {
+                test.systemProperty("robolectric.dependency.repo.url", it)
+            }
+        }
+    }
 }
 
 dependencies {
@@ -57,4 +66,6 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.test:core-ktx:1.6.1")
 }

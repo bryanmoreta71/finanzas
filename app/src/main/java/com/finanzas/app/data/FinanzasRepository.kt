@@ -13,14 +13,36 @@ class FinanzasRepository private constructor(private val context: Context) {
 
     suspend fun currentLedger(): Ledger = buildLedger(dao.getAll())
 
-    suspend fun add(type: MovementType, amountCents: Long, description: String) {
-        dao.insert(Movement(type = type, amountCents = amountCents, description = description.trim()))
+    /** [expectedEpochDay] solo aplica a ingresos: si no es null, el ingreso queda "por cobrar". */
+    suspend fun add(type: MovementType, amountCents: Long, description: String, expectedEpochDay: Long?) {
+        dao.insert(
+            Movement(
+                type = type,
+                amountCents = amountCents,
+                description = description.trim(),
+                expectedEpochDay = expectedEpochDay.takeIf { type == MovementType.INCOME },
+            ),
+        )
         refreshWidget()
     }
 
-    suspend fun edit(id: Long, amountCents: Long, description: String) {
+    suspend fun edit(id: Long, amountCents: Long, description: String, expectedEpochDay: Long?) {
         val current = dao.get(id) ?: return
-        dao.update(current.copy(amountCents = amountCents, description = description.trim()))
+        dao.update(
+            current.copy(
+                amountCents = amountCents,
+                description = description.trim(),
+                expectedEpochDay = expectedEpochDay.takeIf { current.type == MovementType.INCOME },
+            ),
+        )
+        refreshWidget()
+    }
+
+    /** Un ingreso por cobrar ya llegó: pasa a contar en los ingresos disponibles. */
+    suspend fun markReceived(id: Long) {
+        val income = dao.get(id) ?: return
+        if (!income.isToReceive) return
+        dao.update(income.copy(expectedEpochDay = null, createdAt = System.currentTimeMillis()))
         refreshWidget()
     }
 
@@ -30,16 +52,14 @@ class FinanzasRepository private constructor(private val context: Context) {
     }
 
     /**
-     * Marca un egreso como pagado. Con [PaidWith.INCOME] solo se permite si los
-     * ingresos disponibles alcanzan para cubrirlo.
+     * Paga un egreso con los ingresos. Solo se permite si los ingresos disponibles
+     * alcanzan para cubrirlo, sea o no uno de los sugeridos.
      */
-    suspend fun markPaid(id: Long, paidWith: PaidWith): Boolean {
+    suspend fun payWithIncome(id: Long): Boolean {
         val expense = dao.get(id) ?: return false
         if (expense.type != MovementType.EXPENSE || expense.isPaid) return false
-        if (paidWith == PaidWith.INCOME && expense.amountCents > currentLedger().availableIncome) {
-            return false
-        }
-        dao.update(expense.copy(paidWith = paidWith, paidAt = System.currentTimeMillis()))
+        if (expense.amountCents > currentLedger().availableIncome) return false
+        dao.update(expense.copy(paidWith = PaidWith.INCOME, paidAt = System.currentTimeMillis()))
         refreshWidget()
         return true
     }
@@ -51,7 +71,7 @@ class FinanzasRepository private constructor(private val context: Context) {
         refreshWidget()
     }
 
-    private suspend fun refreshWidget() {
+    suspend fun refreshWidget() {
         FinanzasWidget().updateAll(context)
     }
 

@@ -6,6 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 class Converters {
     @TypeConverter
@@ -21,7 +23,13 @@ class Converters {
     fun toPaidWith(value: String?): PaidWith? = value?.let(PaidWith::valueOf)
 }
 
-@Database(entities = [Movement::class], version = 1, exportSchema = false)
+private val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE movements ADD COLUMN expectedEpochDay INTEGER")
+    }
+}
+
+@Database(entities = [Movement::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class FinanzasDatabase : RoomDatabase() {
     abstract fun movementDao(): MovementDao
@@ -36,7 +44,7 @@ abstract class FinanzasDatabase : RoomDatabase() {
                     context.applicationContext,
                     FinanzasDatabase::class.java,
                     "finanzas.db",
-                ).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2).build().also { instance = it }
             }
     }
 }
