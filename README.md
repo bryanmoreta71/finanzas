@@ -27,6 +27,13 @@ App Android (Kotlin) para llevar egresos e ingresos, pensada para usarse desde u
   llegan. No cuentan en los ingresos hasta que tocas **Llegó**.
 - Abajo: total de egresos pendientes y de ingresos disponibles.
 
+## Widget "Gasto rápido"
+
+Un botón para la pantalla de inicio que muestra cuánto tienes en la mano (*Tienes $250*). Al tocarlo
+se abre una ventanita con el teclado listo: escribes en qué gastaste (o tocas uno de tus gastos
+recientes), el valor, y **Guardar gasto**. El gasto se resta al instante de tus ingresos. Toma el
+mismo diseño que elegiste para el widget principal (normal, CMD, Android Studio, VS Code…).
+
 ## Personalizar el widget
 
 En la app, botón **Widget** arriba a la derecha. Ves los cambios en la vista previa y, cuando te
@@ -50,7 +57,9 @@ la app te pregunta si quieres guardar o descartar los cambios. Puedes cambiar:
 
 - **Egresos**: la misma lista que el widget. Toca un egreso para editarlo o eliminarlo.
 - **Ingresos**: por cobrar (con botón **Llegó**) y recibidos; total, lo usado y lo disponible.
-- **Pagados**: historial de lo pagado, con **Deshacer** por si marcaste uno sin querer.
+- **Gastos**: en qué se te va la plata. Total de hoy, la semana, el mes o todo; "¿En qué gastas
+  más?" con tus gastos agrupados por motivo; y la lista día por día. Ahí puedes **Borrar** un gasto
+  o **Deshacer** un egreso pagado. El botón **Anotar gasto** abre la misma ventanita del widget.
 - Botón **Añadir egreso / Añadir ingreso**. Al añadir un ingreso puedes marcarlo como
   *por cobrar* y elegir el día ("El lunes", "Mañana" u otra fecha).
 

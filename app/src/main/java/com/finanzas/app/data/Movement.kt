@@ -12,6 +12,9 @@ enum class PaidWith {
 
     /** Pagado con los ingresos: se resta de ellos. */
     INCOME,
+
+    /** Gasto del día a día registrado con el botón de gasto rápido: también se resta de los ingresos. */
+    SPENT,
 }
 
 @Entity(tableName = "movements")

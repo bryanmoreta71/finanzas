@@ -1,3 +1,10 @@
 <resources>
     <style name="Theme.Finanzas" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Ventanita para el gasto rápido: se dibuja encima de lo que haya en pantalla. -->
+    <style name="Theme.Finanzas.Translucent" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+    </style>
 </resources>

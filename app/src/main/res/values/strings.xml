@@ -2,4 +2,6 @@
     <string name="app_name">Finanzas</string>
     <string name="widget_name">Egresos</string>
     <string name="widget_description">Tus egresos de menor a mayor y cuáles cubren tus ingresos</string>
+    <string name="quick_widget_name">Gasto rápido</string>
+    <string name="quick_widget_description">Toca para anotar un gasto; se resta de tus ingresos</string>
 </resources>

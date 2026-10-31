@@ -23,7 +23,7 @@ data class Ledger(
     val incomes: List<Movement>,
     /** Ingresos por cobrar, del que llega primero al último. */
     val toReceive: List<Movement>,
-    /** Egresos ya pagados, el último pagado primero. */
+    /** Egresos ya pagados y gastos rápidos, el más reciente primero. */
     val paid: List<Movement>,
     val totalIncome: Long,
     val spentFromIncome: Long,
@@ -33,6 +33,11 @@ data class Ledger(
     /** Ingresos recibidos menos lo que ya se pagó con ellos. */
     val availableIncome: Long get() = totalIncome - spentFromIncome
     val suggestedCount: Int get() = pending.count { it.suggested }
+
+    /** Lo último que se ha escrito en gastos, para ofrecerlo como atajo. */
+    val recentDescriptions: List<String>
+        get() = paid.map { it.description.trim() }.filter { it.isNotEmpty() }
+            .distinctBy { it.lowercase() }.take(8)
 
     companion object {
         val EMPTY = buildLedger(emptyList())
@@ -55,7 +60,8 @@ fun buildLedger(movements: List<Movement>): Ledger {
     val paid = expenses.filter { it.isPaid }.sortedByDescending { it.paidAt ?: 0 }
 
     val totalIncome = received.sumOf { it.amountCents }
-    val spentFromIncome = paid.filter { it.paidWith == PaidWith.INCOME }.sumOf { it.amountCents }
+    val spentFromIncome = paid.filter { it.paidWith == PaidWith.INCOME || it.paidWith == PaidWith.SPENT }
+        .sumOf { it.amountCents }
     val available = totalIncome - spentFromIncome
 
     var remaining = available
@@ -82,3 +88,21 @@ fun buildLedger(movements: List<Movement>): Ledger {
         toReceiveTotal = toReceive.sumOf { it.amountCents },
     )
 }
+
+/** Lo gastado en un motivo dentro de un periodo, para "¿En qué gastas más?". */
+data class SpendingGroup(val description: String, val totalCents: Long, val count: Int)
+
+/**
+ * Agrupa los gastos por motivo (sin importar mayúsculas ni espacios), del que más
+ * dinero se lleva al que menos.
+ */
+fun groupSpending(spending: List<Movement>): List<SpendingGroup> =
+    spending.groupBy { it.description.trim().lowercase() }
+        .map { (_, items) ->
+            SpendingGroup(
+                description = items.first().description.trim().ifEmpty { "Sin motivo" },
+                totalCents = items.sumOf { it.amountCents },
+                count = items.size,
+            )
+        }
+        .sortedByDescending { it.totalCents }

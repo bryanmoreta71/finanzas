@@ -45,6 +45,45 @@ class WidgetRenderTest {
         }
     }
 
+    /** El botón de gasto rápido en varios estilos y tamaños, lado a lado en una sola imagen. */
+    @OptIn(ExperimentalGlanceRemoteViewsApi::class)
+    @Test
+    fun renderQuickExpenseButton() = runBlocking {
+        val outDir = System.getProperty("widget.render.dir")?.takeIf { it.isNotBlank() }
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val density = context.resources.displayMetrics.density
+        val names = listOf("Clásico", "Noche", "CMD", "Hacker", "Android Studio", "VS Code")
+        val sizes = listOf(170 to 70, 70 to 70)
+        val cellW = 190
+        val cellH = 90
+        val bitmap = Bitmap.createBitmap((cellW * sizes.size * density).toInt(), (cellH * names.size * density).toInt(), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawRect(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(), Paint().apply {
+            shader = LinearGradient(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(), 0xFF6A11CB.toInt(), 0xFF2575FC.toInt(), Shader.TileMode.CLAMP)
+        })
+        names.forEachIndexed { row, name ->
+            val style = WidgetPresets.first { it.name == name }.style
+            sizes.forEachIndexed { col, (wDp, hDp) ->
+                val views = GlanceRemoteViews().compose(context, DpSize(wDp.dp, hDp.dp)) {
+                    QuickExpenseContent(23050, style, interactive = false)
+                }.remoteViews
+                val view = views.apply(context, FrameLayout(context))
+                val w = (wDp * density).toInt()
+                val h = (hDp * density).toInt()
+                view.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY))
+                view.layout(0, 0, w, h)
+                canvas.save()
+                canvas.translate((col * cellW + 10) * density, (row * cellH + 10) * density)
+                view.draw(canvas)
+                canvas.restore()
+            }
+        }
+        if (outDir != null) {
+            File(outDir).mkdirs()
+            File(outDir, "boton-gasto.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
+    }
+
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     @Test
     fun renderPresets() = runBlocking {

@@ -62,6 +62,28 @@ class LedgerTest {
     }
 
     @Test
+    fun quickSpendingSubtractsFromIncome() {
+        val ledger = buildLedger(listOf(income(25000), expense(1000, PaidWith.SPENT), expense(20000)))
+        assertEquals(24000L, ledger.availableIncome)
+        assertEquals(20000L, ledger.pendingExpenses)
+        assertEquals(false, ledger.pending.single().canPay.not())
+    }
+
+    @Test
+    fun spendingGroupsByDescriptionIgnoringCase() {
+        val items = listOf(
+            Movement(id = 1, type = MovementType.EXPENSE, amountCents = 300, description = "Encebollado", paidWith = PaidWith.SPENT),
+            Movement(id = 2, type = MovementType.EXPENSE, amountCents = 350, description = "encebollado ", paidWith = PaidWith.SPENT),
+            Movement(id = 3, type = MovementType.EXPENSE, amountCents = 1000, description = "Gasolina", paidWith = PaidWith.SPENT),
+        )
+        val groups = groupSpending(items)
+        assertEquals(listOf("Gasolina", "Encebollado"), groups.map { it.description })
+        assertEquals(650L, groups[1].totalCents)
+        assertEquals(2, groups[1].count)
+        assertEquals(listOf("Encebollado", "Gasolina"), buildLedger(items).recentDescriptions)
+    }
+
+    @Test
     fun moneyParsingAndFormatting() {
         assertEquals(5000L, parseMoney("50"))
         assertEquals(5050L, parseMoney("50,5"))

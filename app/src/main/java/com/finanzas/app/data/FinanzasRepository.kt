@@ -3,6 +3,7 @@ package com.finanzas.app.data
 import android.content.Context
 import androidx.glance.appwidget.updateAll
 import com.finanzas.app.widget.FinanzasWidget
+import com.finanzas.app.widget.QuickExpenseWidget
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -64,15 +65,39 @@ class FinanzasRepository private constructor(private val context: Context) {
         return true
     }
 
-    /** Devuelve un egreso pagado a la lista de pendientes. */
+    /** Registra un gasto que ya se hizo: se resta de una vez de los ingresos. */
+    suspend fun addSpending(amountCents: Long, description: String) {
+        val now = System.currentTimeMillis()
+        dao.insert(
+            Movement(
+                type = MovementType.EXPENSE,
+                amountCents = amountCents,
+                description = description.trim(),
+                createdAt = now,
+                paidWith = PaidWith.SPENT,
+                paidAt = now,
+            ),
+        )
+        refreshWidget()
+    }
+
+    /**
+     * Deshace un pago: un egreso pagado vuelve a la lista de pendientes; un gasto rápido
+     * se borra, porque nunca fue un egreso pendiente.
+     */
     suspend fun undoPaid(id: Long) {
         val expense = dao.get(id) ?: return
-        dao.update(expense.copy(paidWith = null, paidAt = null))
+        if (expense.paidWith == PaidWith.SPENT) {
+            dao.delete(id)
+        } else {
+            dao.update(expense.copy(paidWith = null, paidAt = null))
+        }
         refreshWidget()
     }
 
     suspend fun refreshWidget() {
         FinanzasWidget().updateAll(context)
+        QuickExpenseWidget().updateAll(context)
     }
 
     companion object {

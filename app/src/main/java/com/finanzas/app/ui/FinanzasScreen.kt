@@ -22,7 +22,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +40,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import com.finanzas.app.QuickExpenseActivity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -50,7 +52,6 @@ import com.finanzas.app.data.ExpenseRow
 import com.finanzas.app.data.Ledger
 import com.finanzas.app.data.Movement
 import com.finanzas.app.data.MovementType
-import com.finanzas.app.data.PaidWith
 import com.finanzas.app.data.formatLongDay
 import com.finanzas.app.data.formatMoney
 import com.finanzas.app.data.relativeDay
@@ -75,6 +76,7 @@ fun FinanzasScreen(
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var dialog by remember { mutableStateOf<DialogState?>(null) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -91,10 +93,22 @@ fun FinanzasScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
-                    dialog = DialogState.New(if (tab == 1) MovementType.INCOME else MovementType.EXPENSE)
+                    if (tab == 2) {
+                        context.startActivity(Intent(context, QuickExpenseActivity::class.java))
+                    } else {
+                        dialog = DialogState.New(if (tab == 1) MovementType.INCOME else MovementType.EXPENSE)
+                    }
                 },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(if (tab == 1) "Añadir ingreso" else "Añadir egreso") },
+                text = {
+                    Text(
+                        when (tab) {
+                            0 -> "Añadir egreso"
+                            1 -> "Añadir ingreso"
+                            else -> "Anotar gasto"
+                        },
+                    )
+                },
             )
         },
     ) { padding ->
@@ -103,7 +117,7 @@ fun FinanzasScreen(
             TabRow(selectedTabIndex = tab) {
                 Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Egresos") })
                 Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Ingresos") })
-                Tab(selected = tab == 2, onClick = { tab = 2 }, text = { Text("Pagados") })
+                Tab(selected = tab == 2, onClick = { tab = 2 }, text = { Text("Gastos") })
             }
             when (tab) {
                 0 -> ExpensesTab(
@@ -116,7 +130,7 @@ fun FinanzasScreen(
                     onEdit = { dialog = DialogState.Edit(it) },
                     onReceived = viewModel::markReceived,
                 )
-                else -> PaidTab(ledger = ledger, onUndo = viewModel::undoPaid)
+                else -> SpendingTab(ledger = ledger, onUndo = viewModel::undoPaid)
             }
         }
     }
@@ -351,38 +365,6 @@ private fun IncomesTab(ledger: Ledger, onEdit: (Movement) -> Unit, onReceived: (
                     )
                 }
                 Text(formatMoney(income.amountCents), color = IncomeGreen, fontWeight = FontWeight.Bold)
-            }
-            HorizontalDivider()
-        }
-    }
-}
-
-@Composable
-private fun PaidTab(ledger: Ledger, onUndo: (Long) -> Unit) {
-    if (ledger.paid.isEmpty()) {
-        EmptyMessage("Aquí aparecerán los egresos que vayas pagando con tus ingresos.")
-        return
-    }
-    LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
-        items(ledger.paid, key = { it.id }) { expense ->
-            Row(
-                Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        "${formatMoney(expense.amountCents)}  ${expense.description}",
-                        textDecoration = TextDecoration.LineThrough,
-                    )
-                    val source = if (expense.paidWith == PaidWith.INCOME) "Con ingresos" else "Otra fuente"
-                    val date = expense.paidAt?.let { " · " + shortDate.format(Date(it)) } ?: ""
-                    Text(
-                        source + date,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (expense.paidWith == PaidWith.INCOME) IncomeGreen else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                FilledTonalButton(onClick = { onUndo(expense.id) }) { Text("Deshacer") }
             }
             HorizontalDivider()
         }
