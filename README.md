@@ -29,7 +29,9 @@ App Android (Kotlin) para llevar egresos e ingresos, pensada para usarse desde u
 
 ## Personalizar el widget
 
-En la app, botón **Widget** arriba a la derecha. Con vista previa en vivo:
+En la app, botón **Widget** arriba a la derecha. Ves los cambios en la vista previa y, cuando te
+gusten, tocas **Guardar** para que el widget de tu pantalla de inicio cambie. Si sales sin guardar,
+la app te pregunta si quieres guardar o descartar los cambios. Puedes cambiar:
 
 - Diseño **Terminal (CMD)**: el widget se ve como una ventana de consola, con barra de título,
   prompt `C:\finanzas>`, comandos, tabla con guiones y vistos `[ ]`. Presets **CMD** (paleta

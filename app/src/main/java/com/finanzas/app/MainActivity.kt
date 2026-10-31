@@ -2,7 +2,6 @@ package com.finanzas.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
@@ -28,15 +27,25 @@ class MainActivity : ComponentActivity() {
 
                 if (customizing) {
                     val style by viewModel.widgetStyle.collectAsStateWithLifecycle()
-                    BackHandler { customizing = false }
+                    val changed by viewModel.widgetStyleChanged.collectAsStateWithLifecycle()
                     WidgetStyleScreen(
                         ledger = ledger,
                         style = style,
+                        hasChanges = changed,
                         onChange = viewModel::updateWidgetStyle,
+                        onSave = { viewModel.saveWidgetStyle() },
+                        onDiscard = viewModel::discardWidgetStyle,
                         onBack = { customizing = false },
                     )
                 } else {
-                    FinanzasScreen(ledger, viewModel, onCustomizeWidget = { customizing = true })
+                    FinanzasScreen(
+                        ledger,
+                        viewModel,
+                        onCustomizeWidget = {
+                            viewModel.startEditingWidgetStyle()
+                            customizing = true
+                        },
+                    )
                 }
             }
         }

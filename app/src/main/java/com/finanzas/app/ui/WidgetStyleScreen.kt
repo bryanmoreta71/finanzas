@@ -29,6 +29,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -100,30 +109,65 @@ private val Swatches = listOf(
 fun WidgetStyleScreen(
     ledger: Ledger,
     style: WidgetStyle,
+    hasChanges: Boolean,
     onChange: (WidgetStyle) -> Unit,
+    onSave: () -> Unit,
+    onDiscard: () -> Unit,
     onBack: () -> Unit,
 ) {
     var wallpaper by remember { mutableStateOf(0) }
+    var askToSave by remember { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val previewLedger = if (ledger.pending.isEmpty() && ledger.toReceive.isEmpty()) SampleLedger else ledger
+
+    val save = {
+        onSave()
+        scope.launch { snackbar.showSnackbar("¡Listo! Tu widget ya tiene el nuevo diseño") }
+        Unit
+    }
+    // Al salir con cambios sin guardar, se pregunta qué hacer con ellos.
+    val leave = { if (hasChanges) askToSave = true else onBack() }
+    BackHandler(onBack = leave)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Personalizar widget") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver") }
+                    IconButton(onClick = leave) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver") }
+                },
+                actions = {
+                    TextButton(onClick = save, enabled = hasChanges) { Text("Guardar") }
                 },
             )
         },
+        bottomBar = {
+            Surface(tonalElevation = 3.dp) {
+                Button(
+                    onClick = save,
+                    enabled = hasChanges,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                ) {
+                    Icon(Icons.Filled.Check, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (hasChanges) "Guardar y aplicar al widget" else "Sin cambios por guardar")
+                }
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             // Vista previa fija arriba, sobre un "fondo de pantalla".
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .height(330.dp)
                     .background(Wallpapers[wallpaper])
-                    .padding(16.dp),
+                    .padding(12.dp),
             ) {
                 WidgetPreview(previewLedger, style, Modifier.fillMaxSize())
             }
@@ -156,7 +200,7 @@ fun WidgetStyleScreen(
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(WidgetPresets) { preset ->
-                            PresetCard(preset.name, preset.style) {
+                            PresetCard(preset.name, preset.style, selected = preset.style == style.copy(title = preset.style.title)) {
                                 onChange(preset.style.copy(title = style.title))
                             }
                         }
@@ -265,8 +309,8 @@ fun WidgetStyleScreen(
                 }
                 item {
                     Text(
-                        "Los cambios se aplican solos al widget de tu pantalla de inicio. " +
-                            "Las esquinas redondeadas se ven en Android 12 o más nuevo.",
+                        "Arriba ves cómo va quedando. Cuando te guste, toca Guardar para que tu widget " +
+                            "de la pantalla de inicio cambie. Las esquinas redondeadas se ven en Android 12 o más nuevo.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -274,6 +318,28 @@ fun WidgetStyleScreen(
                 }
             }
         }
+    }
+
+    if (askToSave) {
+        AlertDialog(
+            onDismissRequest = { askToSave = false },
+            title = { Text("¿Guardar los cambios?") },
+            text = { Text("Cambiaste el diseño del widget pero todavía no lo guardas.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    askToSave = false
+                    onSave()
+                    onBack()
+                }) { Text("Guardar") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    askToSave = false
+                    onDiscard()
+                    onBack()
+                }) { Text("Descartar") }
+            },
+        )
     }
 }
 
@@ -332,12 +398,17 @@ private fun Section(title: String) {
 }
 
 @Composable
-private fun PresetCard(name: String, style: WidgetStyle, onClick: () -> Unit) {
+private fun PresetCard(name: String, style: WidgetStyle, selected: Boolean, onClick: () -> Unit) {
     val family = style.font.composeFamily()
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(onClick = onClick)) {
         Box(
             Modifier
                 .size(width = 84.dp, height = 60.dp)
+                .border(
+                    width = if (selected) 3.dp else 0.dp,
+                    color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    shape = RoundedCornerShape(14.dp),
+                )
                 .clip(RoundedCornerShape(14.dp))
                 .background(Wallpapers[0])
                 .background(Color(style.background).copy(alpha = style.backgroundAlpha))
@@ -357,13 +428,15 @@ private fun PresetCard(name: String, style: WidgetStyle, onClick: () -> Unit) {
                 } else {
                     Text("$50", color = Color(style.text), fontFamily = family, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
-                Text(
-                    "$20",
-                    color = Color(style.accent),
-                    fontFamily = family,
-                    fontSize = 13.sp,
-                    textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough,
-                )
+                if (!style.layout.isIde) {
+                    Text(
+                        "$20",
+                        color = Color(style.accent),
+                        fontFamily = family,
+                        fontSize = 13.sp,
+                        textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough,
+                    )
+                }
             }
             Box(
                 Modifier

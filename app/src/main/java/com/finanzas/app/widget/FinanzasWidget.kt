@@ -2,6 +2,8 @@ package com.finanzas.app.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -63,11 +65,15 @@ private fun dayLabel(day: LocalDate): String = day.format(dateFormat).replaceFir
 
 class FinanzasWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val ledger = FinanzasRepository.get(context).currentLedger()
-        val style = WidgetStyleStore.load(context)
-        val today = LocalDate.now()
+        val repository = FinanzasRepository.get(context)
+        val initialLedger = repository.currentLedger()
+        val styles = WidgetStyleStore.flow(context)
         provideContent {
-            WidgetContent(ledger, today, style)
+            // Mientras el widget está abierto, Glance no vuelve a llamar a provideGlance al
+            // actualizarlo; por eso los datos y el estilo se escuchan aquí y se redibuja solo.
+            val ledger by repository.ledger.collectAsState(initial = initialLedger)
+            val style by styles.collectAsState()
+            WidgetContent(ledger, LocalDate.now(), style)
         }
     }
 }

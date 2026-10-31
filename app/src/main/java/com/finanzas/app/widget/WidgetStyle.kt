@@ -1,6 +1,8 @@
 package com.finanzas.app.widget
 
 import android.content.Context
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
 
 /** Fuentes del sistema que funcionan dentro de un widget. */
@@ -214,17 +216,34 @@ val WidgetPresets = listOf(
     ),
 )
 
+/**
+ * Estilo guardado del widget. Además de guardarse en disco se publica en un [StateFlow]
+ * para que el widget, si está abierto, se redibuje en cuanto se guarda un cambio.
+ */
 object WidgetStyleStore {
     private const val PREFS = "widget_style"
     private const val KEY = "style"
 
-    fun load(context: Context): WidgetStyle {
+    @Volatile
+    private var state: MutableStateFlow<WidgetStyle>? = null
+
+    fun flow(context: Context): StateFlow<WidgetStyle> = stateFor(context)
+
+    fun load(context: Context): WidgetStyle = stateFor(context).value
+
+    fun save(context: Context, style: WidgetStyle) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, style.toJson()).commit()
+        stateFor(context).value = style
+    }
+
+    private fun stateFor(context: Context): MutableStateFlow<WidgetStyle> =
+        state ?: synchronized(this) {
+            state ?: MutableStateFlow(read(context)).also { state = it }
+        }
+
+    private fun read(context: Context): WidgetStyle {
         val json = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)
             ?: return WidgetStyle()
         return runCatching { WidgetStyle.fromJson(json) }.getOrDefault(WidgetStyle())
-    }
-
-    fun save(context: Context, style: WidgetStyle) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, style.toJson()).apply()
     }
 }
