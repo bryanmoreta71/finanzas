@@ -194,7 +194,7 @@ fun WidgetContent(ledger: Ledger, today: LocalDate, style: WidgetStyle, preview:
                 }
                 if (toReceive.isNotEmpty()) {
                     item(itemId = ToReceiveTitleId) { ToReceiveTitle(look) }
-                    items(toReceive.size, itemId = { -toReceive[it].id }) { i ->
+                    items(toReceive.size, itemId = { ToReceiveIdOffset + toReceive[it].id }) { i ->
                         ToReceiveLine(look, toReceive[i], i, interactive = true)
                     }
                 }
@@ -224,7 +224,10 @@ fun WidgetContent(ledger: Ledger, today: LocalDate, style: WidgetStyle, preview:
 private val CheckWidth = 40.dp
 private val AmountWidth = 64.dp
 private val IncomeWidth = 72.dp
-private const val ToReceiveTitleId = Long.MIN_VALUE + 1
+// Glance reserva los ids menores a -2^62 y falla si se usan ("no se puede mostrar el contenido").
+// Los egresos usan su id; los ingresos por cobrar, su id + ToReceiveIdOffset; las líneas fijas, ids negativos chicos.
+internal const val ToReceiveIdOffset = 1L shl 40
+private const val ToReceiveTitleId = -1L
 
 @Composable
 private fun Header(look: Look, today: String, preview: Boolean) {

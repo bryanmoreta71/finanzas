@@ -30,6 +30,21 @@ import java.io.File
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = "w400dp-h800dp-xhdpi")
 class WidgetRenderTest {
+    /** El widget de verdad (con lista desplazable y acciones) se arma sin errores en todos los estilos. */
+    @OptIn(ExperimentalGlanceRemoteViewsApi::class)
+    @Test
+    fun realWidgetComposesInEveryStyle() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        for (preset in WidgetPresets) {
+            for (style in listOf(preset.style, preset.style.copy(showHeaders = false, showToReceive = false))) {
+                val views = GlanceRemoteViews().compose(context, DpSize(340.dp, 300.dp)) {
+                    WidgetContent(SampleLedger, java.time.LocalDate.of(2026, 10, 31), style, preview = false)
+                }.remoteViews
+                views.apply(context, FrameLayout(context))
+            }
+        }
+    }
+
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     @Test
     fun renderPresets() = runBlocking {

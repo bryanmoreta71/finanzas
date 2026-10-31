@@ -45,10 +45,10 @@ private val TAmount = 64.dp
 private val TIncome = 80.dp
 private val TPay = 44.dp
 
-private const val IntroId = Long.MIN_VALUE + 10
-private const val ExpensesCmdId = Long.MIN_VALUE + 11
-private const val EmptyId = Long.MIN_VALUE + 12
-private const val ToReceiveCmdId = Long.MIN_VALUE + 13
+private const val IntroId = -10L
+private const val ExpensesCmdId = -11L
+private const val EmptyId = -12L
+private const val ToReceiveCmdId = -13L
 
 /**
  * El widget dibujado como una ventana de consola: barra de título, prompt, comandos
@@ -96,7 +96,7 @@ internal fun TerminalContent(ledger: Ledger, today: LocalDate, look: Look, previ
                     }
                     if (toReceive.isNotEmpty()) {
                         item(itemId = ToReceiveCmdId) { Command(look, "porcobrar") }
-                        items(toReceive.size, itemId = { -toReceive[it].id }) { i ->
+                        items(toReceive.size, itemId = { ToReceiveIdOffset + toReceive[it].id }) { i ->
                             ToReceiveLine(look, toReceive[i], interactive = true)
                         }
                     }
